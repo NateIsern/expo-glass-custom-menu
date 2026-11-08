@@ -1,6 +1,6 @@
 # expo-glass-custom-menu
 
-Liquid glass menu for React Native on Android. The trigger melts into a droplet, grows into the menu and shrinks back the same way.
+An attempt at recreating iOS Liquid Glass menu on Android.
 
 https://github.com/user-attachments/assets/632544a0-0a09-4046-9ffb-ec7d4c8ea30b
 
