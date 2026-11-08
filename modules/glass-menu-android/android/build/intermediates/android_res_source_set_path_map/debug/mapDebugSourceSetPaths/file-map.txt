@@ -1,0 +1,9 @@
+expo.modules.glassmenuandroid.glass-menu-android-pngs-0 /Users/rit3zh/Desktop/expo-glass-custom-menu/modules/glass-menu-android/android/build/generated/res/pngs/debug
+expo.modules.glassmenuandroid.glass-menu-android-updated_navigation_xml-1 /Users/rit3zh/Desktop/expo-glass-custom-menu/modules/glass-menu-android/android/build/generated/updated_navigation_xml/debug
+expo.modules.glassmenuandroid.glass-menu-android-mergeDebugResources-2 /Users/rit3zh/Desktop/expo-glass-custom-menu/modules/glass-menu-android/android/build/intermediates/incremental/debug/mergeDebugResources/merged.dir
+expo.modules.glassmenuandroid.glass-menu-android-mergeDebugResources-3 /Users/rit3zh/Desktop/expo-glass-custom-menu/modules/glass-menu-android/android/build/intermediates/incremental/debug/mergeDebugResources/stripped.dir
+expo.modules.glassmenuandroid.glass-menu-android-debug-4 /Users/rit3zh/Desktop/expo-glass-custom-menu/modules/glass-menu-android/android/build/intermediates/merged_res/debug/mergeDebugResources
+expo.modules.glassmenuandroid.glass-menu-android-debug-5 /Users/rit3zh/Desktop/expo-glass-custom-menu/modules/glass-menu-android/android/build/intermediates/packaged_res/debug/packageDebugResources
+expo.modules.glassmenuandroid.glass-menu-android-debug-6 /Users/rit3zh/Desktop/expo-glass-custom-menu/modules/glass-menu-android/android/src/debug/res
+expo.modules.glassmenuandroid.glass-menu-android-main-7 /Users/rit3zh/Desktop/expo-glass-custom-menu/modules/glass-menu-android/android/src/main/res
+gradleHome-0 /Users/rit3zh/.gradle
