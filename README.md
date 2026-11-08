@@ -196,6 +196,6 @@ Built-in icon names: `check`, `grid`, `list`, `plus`, `filter`, `ellipsis`, `tra
 
 ## 🧱 Stack
 
-[Expo SDK 58](https://expo.dev/changelog) · [React Native 0.88](https://reactnative.dev/) · [Expo Modules API](https://docs.expo.dev/modules/overview/) · [AGSL](https://developer.android.com/develop/ui/views/graphics/agsl) · [RenderEffect](https://developer.android.com/reference/android/graphics/RenderEffect) · [Expo Router](https://docs.expo.dev/router/introduction/)
+[Expo SDK 58](https://expo.dev/changelog) · [React Native 0.88](https://reactnative.dev/) · [Expo Modules API](https://docs.expo.dev/modules/overview/) · [AGSL](https://developer.android.com/develop/ui/views/graphics/agsl) · [Expo Router](https://docs.expo.dev/router/introduction/)
 
 ---
