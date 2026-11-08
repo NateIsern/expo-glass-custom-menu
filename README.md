@@ -2,7 +2,7 @@
 
 Liquid glass menu for React Native on Android. The trigger melts into a droplet, grows into the menu and shrinks back the same way.
 
-https://github.com/user-attachments/assets/01e2b7cf-398d-4341-bfb6-12667ea3090f
+https://github.com/user-attachments/assets/632544a0-0a09-4046-9ffb-ec7d4c8ea30b
 
 ---
 
