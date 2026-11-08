@@ -15,11 +15,9 @@ bun install
 bunx expo run:android
 ```
 
-This uses a local native module, so it needs a development build and won't run in Expo Go. The full glass effect needs Android 13 (API 33) or newer. Older versions get a solid menu with the same motion and rows. On other platforms the trigger still renders, but no menu opens.
+This uses a local native module, so it needs a development build and won't run in Expo Go. The full glass effect needs Android 13 (API 33) or newer.
 
 To use it in your own app, copy [`modules/glass-menu-android`](modules/glass-menu-android) into your project's `modules/` folder and rebuild. Expo autolinks it. There are no extra dependencies.
-
-The module lives in [`modules/glass-menu-android`](modules/glass-menu-android). The demo toolbar is in [`src/components/library-toolbar`](src/components/library-toolbar).
 
 ---
 
