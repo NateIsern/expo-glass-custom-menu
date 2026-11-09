@@ -4,7 +4,8 @@ import expo.modules.glassmenuandroid.records.GlassAbsorbRecord
 import expo.modules.glassmenuandroid.records.GlassShrinkRecord
 import kotlin.math.max
 
-internal class GlassMorphTuning(shrink: GlassShrinkRecord?, absorb: GlassAbsorbRecord?) {
+// absorbScale shortens the close (absorb) spring only: the submenu layer uses it so its collapse ends sooner.
+internal class GlassMorphTuning(shrink: GlassShrinkRecord?, absorb: GlassAbsorbRecord?, absorbScale: Float = 1f) {
   private val shrinkDuration = max(shrink?.duration ?: DefaultShrinkDuration, MinimumDuration)
   private val shrinkDamping = shrink?.damping?.coerceIn(MinimumDamping, 1f)
 
@@ -13,7 +14,7 @@ internal class GlassMorphTuning(shrink: GlassShrinkRecord?, absorb: GlassAbsorbR
   val eject = GlassSpringSpec(shrinkDamping ?: DefaultEjectDamping, shrinkDuration * EjectRatio)
   val absorb = GlassSpringSpec(
     absorb?.damping?.coerceIn(MinimumDamping, 1f) ?: DefaultAbsorbDamping,
-    max(absorb?.duration ?: DefaultAbsorbDuration, MinimumDuration),
+    max((absorb?.duration ?: DefaultAbsorbDuration) * absorbScale, MinimumDuration),
   )
   val neckHold = max(shrinkDuration / DefaultShrinkDuration, 1f)
 

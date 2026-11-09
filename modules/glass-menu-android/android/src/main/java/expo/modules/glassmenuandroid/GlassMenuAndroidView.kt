@@ -195,6 +195,11 @@ class GlassMenuAndroidView(context: Context, appContext: AppContext) : ExpoView(
   internal fun renderer(pixelDensity: Float): GlassRenderer =
     glassRenderer as? GlassRenderer ?: GlassRenderer(pixelDensity, pixelDensity * FieldStep).also { glassRenderer = it }
 
+  // A separate renderer for each stacked panel: a renderer records into its own shared RenderNodes, so two
+  // panels drawn from one renderer in the same frame would overwrite each other's recordings.
+  @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+  internal fun newRenderer(pixelDensity: Float): GlassRenderer = GlassRenderer(pixelDensity, pixelDensity * FieldStep)
+
   internal fun isDark(): Boolean = when (colorScheme) {
     "dark" -> true
     "light" -> false

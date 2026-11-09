@@ -54,6 +54,18 @@ const LibraryToolbarBase: FC<ILibraryToolbar> = ({
           <EllipsisIcon color={palette.ink} />
         </Menu.Trigger>
         <Menu.Content>
+          <Menu.Submenu id="quick-actions" title="Acciones rápidas">
+            <Menu.Item id="quick-play">
+              <Menu.Item.Title>Reproducir</Menu.Item.Title>
+            </Menu.Item>
+            <Menu.Item id="quick-queue">
+              <Menu.Item.Title>Añadir a cola</Menu.Item.Title>
+            </Menu.Item>
+            <Menu.Item id="quick-share">
+              <Menu.Item.Title>Compartir</Menu.Item.Title>
+            </Menu.Item>
+          </Menu.Submenu>
+          <Menu.Separator />
           {LIBRARY_TOOLBAR_LAYOUTS.map(
             (option): React.JSX.Element => (
               <Menu.Item
@@ -77,6 +89,18 @@ const LibraryToolbarBase: FC<ILibraryToolbar> = ({
               </Menu.Item>
             ),
           )}
+          <Menu.Separator />
+          <Menu.Submenu id="more-options" title="Más opciones">
+            <Menu.Item id="more-export">
+              <Menu.Item.Title>Exportar</Menu.Item.Title>
+            </Menu.Item>
+            <Menu.Item id="more-backup">
+              <Menu.Item.Title>Copia de seguridad</Menu.Item.Title>
+            </Menu.Item>
+            <Menu.Item id="more-trash">
+              <Menu.Item.Title>Papelera</Menu.Item.Title>
+            </Menu.Item>
+          </Menu.Submenu>
           <Menu.Separator />
           {LIBRARY_TOOLBAR_SORTS.map((title) => (
             <Menu.Item

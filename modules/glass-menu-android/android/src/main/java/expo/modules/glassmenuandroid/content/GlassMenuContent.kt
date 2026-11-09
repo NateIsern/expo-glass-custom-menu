@@ -65,8 +65,15 @@ internal class GlassMenuContent(
   var height = 0f
     private set
   var dark = true
+  // Alpha of the whole content: the submenu navigation fades the level in (RowsRevealSpring).
+  var contentAlpha = 1f
 
-  fun setItems(items: List<GlassMenuItemRecord>, requestedWidth: Float?, maximumWidth: Float, fontFamily: String?) {
+  // Forces the check column (the parent menu's), so the header row is laid out exactly as the row it came from.
+  var forceCheckColumn: Boolean? = null
+  val reservesCheckColumn: Boolean get() = reservesCheck
+
+  // `back`: the submenu being shown (its header row returns to the parent panel), null at the root.
+  fun setItems(items: List<GlassMenuItemRecord>, requestedWidth: Float?, maximumWidth: Float, fontFamily: String?, back: GlassMenuItemRecord? = null) {
     val typeface = resolveTypeface(fontFamily)
     val fontScale = min(context.resources.configuration.fontScale, 1.35f)
     titlePaint.typeface = typeface
@@ -75,15 +82,19 @@ internal class GlassMenuContent(
     subtitlePaint.textSize = Metrics.SubtitleSize * density * fontScale * FontFit
     titlePaint.letterSpacing = TitleTracking
     subtitlePaint.letterSpacing = 0f
-    reservesCheck = items.any { it.checked != null }
-    val built = items.mapIndexed { index, item -> GlassRow(item, index) }
+    reservesCheck = forceCheckColumn ?: items.any { it.checked != null }
+    val flat = ArrayList<GlassRow>()
+    if (back != null) flat.add(GlassRow(back, 0, back = true))
+    items.forEach { item -> flat.add(GlassRow(item, flat.size)) }
+    val built: List<GlassRow> = flat
 
     var widest = Metrics.MinimumWidth * density
     for (row in built) {
       if (row.isSeparator) continue
       val paint = titlePaint
       val text = paint.measureText(row.item.title)
-      val needed = leading(row.item) * density + text + Metrics.TrailingInset * density
+      val reserve = if (row.submenu || row.back) CHEVRON_RESERVE else 0f
+      val needed = rowLeading(row) * density + text + (Metrics.TrailingInset + reserve) * density
       widest = max(widest, needed)
     }
     width = min(requestedWidth?.times(density) ?: ceil(widest), maximumWidth)
@@ -100,7 +111,7 @@ internal class GlassMenuContent(
       row.rect.set(Metrics.PlateInsetX * density, y, width - Metrics.PlateInsetX * density, y + rowHeight)
       y += rowHeight
       if (!row.isSeparator) {
-        val available = width - leading(row.item) * density - Metrics.TrailingInset * density
+        val available = width - rowLeading(row) * density - (Metrics.TrailingInset + (if (row.submenu || row.back) CHEVRON_RESERVE else 0f)) * density
         row.title = TextUtils.ellipsize(row.item.title, titlePaint, available, TextUtils.TruncateAt.END)
         row.subtitle = row.item.subtitle?.let { TextUtils.ellipsize(it, subtitlePaint, available, TextUtils.TruncateAt.END) }
       }
@@ -164,60 +175,75 @@ internal class GlassMenuContent(
     fillPaint.shader = null
   }
 
-  fun draw(canvas: Canvas, scroll: Float) {
-    val foreground = if (dark) Color.argb(245, 255, 255, 255) else Color.argb(235, 0, 0, 0)
-    val muted = if (dark) Color.argb(153, 235, 235, 245) else Color.argb(153, 60, 60, 67)
-    val destructive = if (dark) Color.rgb(255, 82, 84) else Color.rgb(220, 30, 48)
+  // All rows, with the rows matching `skip` left out (the submenu's header is drawn by the submenu panel).
+  fun draw(canvas: Canvas, scroll: Float, skip: ((GlassRow) -> Boolean)? = null) {
     canvas.save()
     canvas.translate(0f, -scroll)
     for (row in rows) {
-      if (row.isSeparator) {
-        fillPaint.color = if (dark) Color.argb(17, 255, 255, 255) else Color.argb(26, 0, 0, 0)
-        val y = row.rect.centerY()
-        val half = density / 2f
-        canvas.drawRect(Metrics.SeparatorInset * density, y - half, width - Metrics.SeparatorInset * density, y + half, fillPaint)
-        continue
-      }
-      val alpha = if (row.item.disabled) .38f else 1f
-      val base = if (row.item.destructive) destructive else foreground
-      val color = withAlpha(base, alpha)
-      val left = leading(row.item) * density
-      if (row.isHeading) {
-        subtitlePaint.color = muted
-        val baseline = row.rect.bottom - 8f * density
-        canvas.drawText(row.title, 0, row.title.length, left, baseline, subtitlePaint)
-        continue
-      }
-      val centerY = row.rect.centerY()
-      if (row.item.checked == true) {
-        drawIcon(canvas, "check", null, Metrics.CheckCenter * density, centerY, 13.5f, color, 1.9f)
-      }
-      if (hasIcon(row.item)) {
-        val center = (if (reservesCheck) Metrics.IconCenterWithCheck else Metrics.IconCenterPlain) * density
-        val slot = row.item.iconSlot
-        if (slot != null) {
-          drawIconView(canvas, slot, center, centerY, alpha)
-        } else {
-          drawIcon(canvas, row.item.icon, row.item.iconPath, center, centerY, Metrics.IconSize, color, 1.45f)
-        }
-      }
-      titlePaint.color = color
-      val metrics = titlePaint.fontMetrics
-      val subtitle = row.subtitle
-      if (subtitle == null) {
-        val baseline = centerY - (metrics.ascent + metrics.descent) / 2f
-        canvas.drawText(row.title, 0, row.title.length, left, baseline, titlePaint)
-      } else {
-        canvas.drawText(row.title, 0, row.title.length, left, centerY - 2f * density, titlePaint)
-        subtitlePaint.color = withAlpha(muted, alpha)
-        canvas.drawText(subtitle, 0, subtitle.length, left, centerY + 16f * density, subtitlePaint)
-      }
+      if (skip?.invoke(row) == true) continue
+      drawRow(canvas, row, 0f)
     }
     canvas.restore()
   }
 
+  // One row: its separator, text, icon, check and chevron. The same draw for every row, so a row that moves
+  // (the submenu header) is drawn by the same code wherever it is. `chevronRotation` turns the trailing chevron
+  // around its own centre.
+  fun drawRow(canvas: Canvas, row: GlassRow, chevronRotation: Float) {
+    val foreground = if (dark) Color.argb(245, 255, 255, 255) else Color.argb(235, 0, 0, 0)
+    val muted = if (dark) Color.argb(153, 235, 235, 245) else Color.argb(153, 60, 60, 67)
+    val destructive = if (dark) Color.rgb(255, 82, 84) else Color.rgb(220, 30, 48)
+    if (row.isSeparator) {
+      fillPaint.color = if (dark) Color.argb(17, 255, 255, 255) else Color.argb(26, 0, 0, 0)
+      val y = row.rect.centerY()
+      val half = density / 2f
+      canvas.drawRect(Metrics.SeparatorInset * density, y - half, width - Metrics.SeparatorInset * density, y + half, fillPaint)
+      return
+    }
+    val alpha = if (row.item.disabled) .38f else 1f
+    val base = if (row.item.destructive) destructive else foreground
+    val color = withAlpha(base, alpha)
+    val left = rowLeading(row) * density
+    if (row.isHeading) {
+      subtitlePaint.color = muted
+      val baseline = row.rect.bottom - 8f * density
+      canvas.drawText(row.title, 0, row.title.length, left, baseline, subtitlePaint)
+      return
+    }
+    val centerY = row.rect.centerY()
+    if (row.item.checked == true) {
+      drawIcon(canvas, "check", null, Metrics.CheckCenter * density, centerY, 13.5f, color, 1.9f)
+    }
+    if (hasIcon(row.item)) {
+      val center = (if (reservesCheck) Metrics.IconCenterWithCheck else Metrics.IconCenterPlain) * density
+      val slot = row.item.iconSlot
+      if (slot != null) {
+        drawIconView(canvas, slot, center, centerY, alpha)
+      } else {
+        drawIcon(canvas, row.item.icon, row.item.iconPath, center, centerY, Metrics.IconSize, color, 1.45f)
+      }
+    }
+    if (row.submenu || row.back) {
+      drawIcon(canvas, "chevron", null, width - (Metrics.TrailingInset + 3f) * density, centerY, 18f, color, 1.6f, chevronRotation)
+    }
+    titlePaint.color = color
+    val metrics = titlePaint.fontMetrics
+    val subtitle = row.subtitle
+    if (subtitle == null) {
+      val baseline = centerY - (metrics.ascent + metrics.descent) / 2f
+      canvas.drawText(row.title, 0, row.title.length, left, baseline, titlePaint)
+    } else {
+      canvas.drawText(row.title, 0, row.title.length, left, centerY - 2f * density, titlePaint)
+      subtitlePaint.color = withAlpha(muted, alpha)
+      canvas.drawText(subtitle, 0, subtitle.length, left, centerY + 16f * density, subtitlePaint)
+    }
+  }
+
+  // The header row's title starts after its chevron column.
+  private fun rowLeading(row: GlassRow): Float = leading(row.item)
+
   private fun withAlpha(color: Int, alpha: Float): Int =
-    Color.argb((Color.alpha(color) * alpha).toInt(), Color.red(color), Color.green(color), Color.blue(color))
+    Color.argb((Color.alpha(color) * alpha * contentAlpha).toInt(), Color.red(color), Color.green(color), Color.blue(color))
 
   private fun drawIconView(canvas: Canvas, slot: Int, centerX: Float, centerY: Float, alpha: Float) {
     val view = iconView(slot) ?: return
@@ -235,12 +261,13 @@ internal class GlassMenuContent(
 
   private fun drawIcon(
     canvas: Canvas, name: String?, customPath: String?, centerX: Float, centerY: Float,
-    size: Float, color: Int, weight: Float,
+    size: Float, color: Int, weight: Float, rotation: Float = 0f,
   ) {
     val pixels = size * density
     val scale = pixels / 24f
     iconMatrix.setScale(scale, scale)
     iconMatrix.postTranslate(centerX - pixels / 2f, centerY - pixels / 2f)
+    if (rotation != 0f) iconMatrix.postRotate(rotation, centerX, centerY)
     iconPath.reset()
     if (customPath != null) {
       val parsed = runCatching { PathParser.createPathFromPathData(customPath) }.getOrNull() ?: return
@@ -257,6 +284,8 @@ internal class GlassMenuContent(
   }
 
   private companion object {
+    // Chevron column reserved at the trailing edge of a submenu row (dp).
+    const val CHEVRON_RESERVE = 24f
     const val FontFit = .978f
     const val TitleTracking = -.012f
     const val PlateDark = .155f

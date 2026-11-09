@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 
 import { MenuItem } from "../components/menu-item/menu-item";
+import { MenuSubmenu } from "../components/menu-submenu/menu-submenu";
 import { MenuLabel } from "../components/menu-label/menu-label";
 import { MenuSeparator } from "../components/menu-separator/menu-separator";
 import type { TNativeMenuItem, TParsedMenu } from "../context/interface";
@@ -8,6 +9,7 @@ import type {
   IMenuContent,
   IMenuItem,
   IMenuLabel,
+  ISubmenu,
   TMenuEntry,
   TMenuScheme,
 } from "../interface";
@@ -47,6 +49,22 @@ const parseMenuContent = (
         id: `heading-${items.length}`,
         title: label.props.children,
         heading: true,
+      });
+    } else if (element.type === MenuSubmenu) {
+      const sub: ReactElement<ISubmenu> = element as ReactElement<ISubmenu>;
+      const children: TNativeMenuItem[] = [];
+      flattenElements(sub.props.children).forEach((part: TElementWithChildren): void => {
+        if (part.type !== MenuItem) return;
+        const entry: ReactElement<IMenuItem> = part as ReactElement<IMenuItem>;
+        const child: TNativeMenuItem = parseMenuItem(entry, children.length, scheme, icons);
+        children.push(child);
+        if (entry.props.onSelect) handlers[child.id] = entry.props.onSelect;
+      });
+      items.push({
+        id: sub.props.id ?? `submenu-${items.length}`,
+        title: sub.props.title,
+        icon: sub.props.icon,
+        items: children,
       });
     } else if (element.type === MenuItem) {
       const entry: ReactElement<IMenuItem> = element as ReactElement<IMenuItem>;

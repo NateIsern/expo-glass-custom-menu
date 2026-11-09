@@ -20,6 +20,10 @@ type TNativeMenuItem = {
   keepOpen?: boolean;
   separator?: boolean;
   heading?: boolean;
+  // Present on submenu rows: the child items (a chevron row).
+  items?: TNativeMenuItem[];
+  // The header row of a submenu panel: returns to the parent panel.
+  back?: boolean;
 };
 
 interface INativeMenuHandle {

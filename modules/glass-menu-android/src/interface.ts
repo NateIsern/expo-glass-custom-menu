@@ -130,6 +130,15 @@ interface IMenuContent {
   children?: ReactNode;
 }
 
+// A submenu: a row with a chevron that opens the child items in a glass layer (touch: a layer over the root;
+// fine pointer: a flyout beside the row).
+interface ISubmenu {
+  id?: string;
+  title: string;
+  icon?: TMenuIconName;
+  children?: ReactNode;
+}
+
 interface IMenuItem {
   id?: string;
   checked?: boolean;
@@ -159,6 +168,7 @@ export {
   type IMenuContent,
   type IMenuHandle,
   type IMenuItem,
+  type ISubmenu,
   type IMenuItemIcon,
   type IMenuItemText,
   type IMenuLabel,

@@ -16,4 +16,6 @@ class GlassMenuItemRecord : Record {
   @Field val keepOpen: Boolean = false
   @Field val separator: Boolean = false
   @Field val heading: Boolean = false
+  // Submenu rows: the child items. Null for plain items.
+  @Field val items: List<GlassMenuItemRecord>? = null
 }

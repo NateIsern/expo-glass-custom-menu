@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# CanvasKit wasm copied by scripts/copy-canvaskit.js (postinstall)
+public/canvaskit.wasm

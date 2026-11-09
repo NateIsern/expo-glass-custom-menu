@@ -3,8 +3,10 @@ package expo.modules.glassmenuandroid.content
 import android.graphics.RectF
 import expo.modules.glassmenuandroid.records.GlassMenuItemRecord
 
-internal class GlassRow(val item: GlassMenuItemRecord, val index: Int) {
+internal class GlassRow(val item: GlassMenuItemRecord, val index: Int, val back: Boolean = false) {
   val rect = RectF()
+  // A submenu row: chevron; a tap enters the submenu panel (navigation).
+  val submenu: Boolean get() = !back && item.items != null
   var title: CharSequence = ""
   var subtitle: CharSequence? = null
   val isSeparator get() = item.separator

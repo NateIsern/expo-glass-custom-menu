@@ -121,6 +121,100 @@ internal class GlassMotion {
     publish()
   }
 
+  // Scrubbed morph (predictive back). beginScrub saves the state after retarget(false): the close timeline, not yet
+  // advanced. scrubTo(progress) restores that state and advances the same timeline to the time at which the shape has
+  // collapsed by `progress` of its total collapse, so the frame at a progress is the frame the close shows then. endScrub(commit) keeps the timeline where it
+  // is (commit: the normal close runs on from there) or reopens it with the normal open timeline (cancel).
+  var scrubbing = false
+    private set
+  // The close timeline sampled at gesture start: time, and the shape's area at that time. scrubTo maps the finger's
+  // progress to the time at which the shape has covered that fraction of its own collapse, so the shape moves in
+  // proportion to the finger, from the first frame (no new constants: the samples come from the same timeline).
+  private val scrubTimes = ArrayList<Float>()
+  private val scrubAreas = ArrayList<Float>()
+  private val savedChannels = List(20) { GlassSpring() }
+  private var savedFlags = BooleanArray(6)
+  private var savedElapsed = 0f
+  private var savedExpanded = false
+
+  fun beginScrub() {
+    if (!initialized || expanded) return
+    saveState()
+    sampleCollapse()
+    restoreState()
+    scrubbing = true
+    publish()
+  }
+
+  fun scrubTo(progress: Float) {
+    if (!scrubbing) return
+    restoreState()
+    advanceBy(scrubTimeFor(progress.coerceIn(0f, 1f)))
+  }
+
+  // The time whose shape has collapsed by `fraction` of the total collapse (linear between samples).
+  private fun scrubTimeFor(fraction: Float): Float {
+    val count = scrubTimes.size
+    if (count < 2) return 0f
+    val start = scrubAreas[0]
+    val end = scrubAreas[count - 1]
+    val total = start - end
+    if (total <= 0f) return fraction * scrubTimes[count - 1]
+    val target = start - fraction * total
+    for (i in 1 until count) {
+      if (scrubAreas[i] <= target) {
+        val a = scrubAreas[i - 1]
+        val b = scrubAreas[i]
+        val t = if (a == b) 0f else (a - target) / (a - b)
+        return scrubTimes[i - 1] + t * (scrubTimes[i] - scrubTimes[i - 1])
+      }
+    }
+    return scrubTimes[count - 1]
+  }
+
+  fun endScrub(commit: Boolean) {
+    if (!scrubbing) return
+    scrubbing = false
+    if (!commit) retarget(true)
+  }
+
+  private fun saveState() {
+    channels.forEachIndexed { i, spring -> savedChannels[i].copyFrom(spring) }
+    savedFlags = booleanArrayOf(correctionApplied, smoothingReleased, lensReleased, closingKickReleased, sourceKickReleased, portalBlurReleased)
+    savedElapsed = elapsed
+    savedExpanded = expanded
+  }
+
+  private fun restoreState() {
+    channels.forEachIndexed { i, spring -> spring.copyFrom(savedChannels[i]) }
+    correctionApplied = savedFlags[0]
+    smoothingReleased = savedFlags[1]
+    lensReleased = savedFlags[2]
+    closingKickReleased = savedFlags[3]
+    sourceKickReleased = savedFlags[4]
+    portalBlurReleased = savedFlags[5]
+    elapsed = savedElapsed
+    expanded = savedExpanded
+  }
+
+  // Samples the close timeline (until it is visually collapsed) on the saved state: the time and the shape's area.
+  // Fixed step, so the same close always gives the same samples.
+  private fun sampleCollapse() {
+    scrubTimes.clear()
+    scrubAreas.clear()
+    scrubTimes.add(0f)
+    scrubAreas.add(frame.bounds.width() * frame.bounds.height())
+    var time = 0f
+    while (time < MaxScrubSeconds) {
+      val done = advanceBy(ScrubStepSeconds)
+      time += ScrubStepSeconds
+      scrubTimes.add(time)
+      scrubAreas.add(frame.bounds.width() * frame.bounds.height())
+      if (done) break
+    }
+    restoreState()
+  }
+
   fun retarget(nextExpanded: Boolean) {
     if (!initialized) return
     expanded = nextExpanded
@@ -347,7 +441,11 @@ internal class GlassMotion {
     return 1.65f + (1.2f - 1.65f) * heightFactor
   }
 
-  private companion object {
+  // internal: the submenu navigation (GlassMenuSession) reuses RowsRevealSpring.
+  internal companion object {
+    // Measurement only (the length of the close timeline for a scrub): not tuning values.
+    const val ScrubStepSeconds = 1f / 240f
+    const val MaxScrubSeconds = 3f
     const val GeometrySpeed = 0.7f
     const val MaxGrowth = 1.2f
     const val ClosePinch = .84f

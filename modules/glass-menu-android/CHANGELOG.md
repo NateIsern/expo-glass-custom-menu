@@ -1,5 +1,24 @@
 # expo-module-template
 
+## Unreleased
+
+### Added
+
+- `Menu.Submenu`: a row with a chevron that opens its child items. On Android the child is a stacked layer over the root (flag `GLASS_SUBMENU_LAYERS`, `overlay/GlassSubmenuLayer.kt`); the parent row is the layer's header.
+- Predictive back on Android 14+ for every menu: with a submenu open, the gesture moves it back into its row; with only the root open, the gesture scrubs the close animation. The system decides commit and cancel. Requires `android.predictiveBackGestureEnabled` in `app.json` and `android:enableOnBackInvokedCallback` in the manifest.
+- `GlassMotion.beginScrub`, `scrubTo` and `endScrub`, and `GlassSpring.copyFrom`, for manual control of a morph's progress. Additive: the existing timeline is unchanged.
+- Web: submenus open as a layer (touch covers the root; fine pointer opens beside the row). Escape and the browser back button close the submenu first, then the menu.
+
+### Changed
+
+- Web, fine pointer: the menu is set at 0.7 of the phone size (`DESKTOP_MENU_SCALE`).
+- Native, tapping outside while a submenu is open returns to the root instead of closing the menu.
+
+### Known issues
+
+- Web: opening a submenu layer drops frames (over 33 ms on 17 of 59 frames on touch, 14 of 76 on desktop, headless software GL). The live glass of the layer is the measured cause.
+- Submenu morph on `GlassMotion` and a second test menu are not done.
+
 ## 58.0.9
 
 ### Patch Changes

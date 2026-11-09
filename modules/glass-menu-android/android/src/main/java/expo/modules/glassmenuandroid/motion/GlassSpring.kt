@@ -35,6 +35,14 @@ internal class GlassSpring(
     spec = nextSpec
   }
 
+  // Copies the whole state (value, velocity, target, spec) of another spring: used by the scrubbed morph.
+  internal fun copyFrom(other: GlassSpring) {
+    value = other.value
+    velocity = other.velocity
+    destination = other.destination
+    spec = other.spec
+  }
+
   fun finish() {
     value = destination
     velocity = 0f

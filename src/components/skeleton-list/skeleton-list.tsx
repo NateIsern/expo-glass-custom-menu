@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { StyleSheet, useWindowDimensions, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { LIBRARY_TOOLBAR_TOP_OFFSET } from "@/constants/components/library-toolbar.const";
 import {
@@ -25,15 +25,15 @@ import { registerComponent } from "@/utils/register-component.util";
 
 import type { ISkeletonList } from "./interface";
 
+const SKELETON_HALF_GAP: number = SKELETON_GAP / 2;
+
 const SkeletonListBase: FC<ISkeletonList> = ({
   topInset,
 }: ISkeletonList &
   React.ComponentProps<typeof SkeletonListBase>): React.ReactNode &
   React.JSX.Element => {
-  const { width: screenWidth } = useWindowDimensions();
-  const contentWidth = screenWidth - SKELETON_GUTTER * 2;
-  const tileWidth = (contentWidth - SKELETON_GAP) / 2;
-
+  // Sizes come from layout (flex and aspect ratio), not from the window width: the window width is unknown on the
+  // server, so measured sizes made the server and client markup differ.
   return (
     <View
       accessibilityLabel="Loading"
@@ -47,12 +47,7 @@ const SkeletonListBase: FC<ISkeletonList> = ({
         <View style={styles.title} />
       </View>
 
-      <View
-        style={[
-          styles.hero,
-          { height: Math.round(contentWidth * SKELETON_HERO_HEIGHT_RATIO) },
-        ]}
-      />
+      <View style={styles.hero} />
 
       <View style={styles.meta}>
         <View style={styles.avatar} />
@@ -64,16 +59,9 @@ const SkeletonListBase: FC<ISkeletonList> = ({
 
       <View style={styles.grid}>
         {Array.from({ length: SKELETON_TILE_COUNT }, (_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.tile,
-              {
-                width: tileWidth,
-                height: Math.round(tileWidth * SKELETON_TILE_HEIGHT_RATIO),
-              },
-            ]}
-          />
+          <View key={index} style={styles.tileCell}>
+            <View style={styles.tile} />
+          </View>
         ))}
       </View>
 
@@ -86,16 +74,9 @@ const SkeletonListBase: FC<ISkeletonList> = ({
         ]}
       >
         {Array.from({ length: SKELETON_TILE_COUNT }, (_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.tile,
-              {
-                width: tileWidth,
-                height: Math.round(tileWidth * SKELETON_TILE_HEIGHT_RATIO),
-              },
-            ]}
-          />
+          <View key={index} style={styles.tileCell}>
+            <View style={styles.tile} />
+          </View>
         ))}
       </View>
     </View>
@@ -121,6 +102,7 @@ const styles = StyleSheet.create({
     backgroundColor: SKELETON_BONE_COLOR,
   },
   hero: {
+    aspectRatio: 1 / SKELETON_HERO_HEIGHT_RATIO,
     borderRadius: SKELETON_HERO_RADIUS,
     borderCurve: "continuous",
     backgroundColor: SKELETON_SURFACE_COLOR,
@@ -155,9 +137,16 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: SKELETON_GAP,
+    marginHorizontal: -SKELETON_HALF_GAP,
+    marginVertical: -SKELETON_HALF_GAP,
+  },
+  tileCell: {
+    width: "50%",
+    padding: SKELETON_HALF_GAP,
   },
   tile: {
+    width: "100%",
+    aspectRatio: 1 / SKELETON_TILE_HEIGHT_RATIO,
     borderRadius: SKELETON_TILE_RADIUS,
     borderCurve: "continuous",
     backgroundColor: SKELETON_SURFACE_COLOR,

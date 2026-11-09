@@ -17,6 +17,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.WindowInsets
+import android.window.BackEvent
+import android.window.OnBackAnimationCallback
 import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
 import androidx.annotation.RequiresApi
@@ -276,7 +278,8 @@ internal class GlassMenuOverlay private constructor(
     val active = session
     if (active != null) {
       val speed = active.anchor.config.speed
-      if (active.tick(seconds * speed)) finishSession(notify = false) else running = running || active.needsFrame
+      // notify: a predictive back that finished the root still has to report the menu closed to its anchor.
+      if (active.tick(seconds * speed)) finishSession(notify = true) else running = running || active.needsFrame
     }
     invalidate()
     if (running) {
@@ -318,9 +321,33 @@ internal class GlassMenuOverlay private constructor(
   private fun registerBack() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || backCallback != null) return
     val dispatcher = findOnBackInvokedDispatcher() ?: return
-    val callback = OnBackInvokedCallback { requestClose() }
+    val callback: OnBackInvokedCallback =
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) PredictiveBack() else OnBackInvokedCallback { requestClose() }
     dispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_OVERLAY, callback)
     backCallback = callback
+  }
+
+  // Predictive back (Android 14+). With a submenu open the gesture drives it back into its row, frame by frame;
+  // with only the root open, the menu closes with its own close animation. The app is never closed while the
+  // menu is open: this callback consumes the back event.
+  @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+  private inner class PredictiveBack : OnBackAnimationCallback {
+    override fun onBackStarted(backEvent: BackEvent) {
+      session?.backGestureStart()
+    }
+
+    override fun onBackProgressed(backEvent: BackEvent) {
+      session?.backGestureProgress(backEvent.progress)
+    }
+
+    override fun onBackCancelled() {
+      session?.backGestureCancel()
+    }
+
+    override fun onBackInvoked() {
+      val active = session
+      if (active == null || !active.backGestureInvoke()) requestClose()
+    }
   }
 
   private fun unregisterBack() {

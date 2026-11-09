@@ -98,7 +98,24 @@ When only one button inside a larger pill should open the menu, turn off `openOn
 </Menu>
 ```
 
-Hold on the menu and drag to slide the highlight between rows, then let go to choose one. The glass stretches toward your finger and wobbles back when you release. The glass trigger lights up under your finger and swells while pressed. Tapping outside or pressing Back closes the menu, and TalkBack can read every row.
+Hold on the menu and drag to slide the highlight between rows, then let go to choose one. The glass stretches toward your finger and wobbles back when you release. The glass trigger lights up under your finger and swells while pressed. Tapping outside or pressing Back closes the menu, and TalkBack can read every row. With a submenu open, tapping outside or pressing Back returns to the root first. On Android 14 and newer, Back is predictive: the gesture moves the menu back as you drag it.
+
+Rows can open a submenu. Its children must be `Menu.Item`s:
+
+```tsx
+<Menu.Content>
+  <Menu.Submenu title="Sort by" icon="sort">
+    <Menu.Item id="name" checked={sort === "name"} onSelect={() => setSort("name")}>
+      <Menu.Item.Title>Name</Menu.Item.Title>
+    </Menu.Item>
+    <Menu.Item id="date" checked={sort === "date"} onSelect={() => setSort("date")}>
+      <Menu.Item.Title>Date</Menu.Item.Title>
+    </Menu.Item>
+  </Menu.Submenu>
+</Menu.Content>
+```
+
+On Android the submenu opens as a panel over the root, and its header takes you back. On web, a touch device gets the same panel; a mouse opens it beside the row.
 
 ---
 
@@ -139,6 +156,14 @@ Must be a direct child of `Menu`.
 | `alignment`  | `"auto" \| "start" \| "center" \| "end"` | `"auto"`    | Horizontal alignment to the trigger.          |
 | `fontFamily` | `string`                                 | bundled Inter | A font loaded with `expo-font`.             |
 | `config`     | `TMenuConfig`                            | none        | Menu glass and motion options.                |
+
+### `<Menu.Submenu>`
+
+| Prop    | Type        | Default | Description                                   |
+| ------- | ----------- | ------- | --------------------------------------------- |
+| `title` | `string`    | none    | Label of the row.                             |
+| `icon`  | `string`    | none    | A built-in icon name (see `Menu.Item`).       |
+| `id`    | `string`    | `submenu-<index>` | Identifies the row.                 |
 
 ### `<Menu.Item>`
 

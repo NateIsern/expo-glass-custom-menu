@@ -21,6 +21,7 @@ internal object GlassIcons {
         addCircle(3.9f, y, .35f, Path.Direction.CW)
       }
     }
+    "chevron" -> Path().apply { moveTo(9f, 6f); lineTo(15f, 12f); lineTo(9f, 18f) }
     "plus" -> Path().apply { moveTo(12f, 4f); lineTo(12f, 20f); moveTo(4f, 12f); lineTo(20f, 12f) }
     "filter" -> Path().apply {
       moveTo(3.5f, 7f); lineTo(20.5f, 7f); moveTo(6.5f, 12f); lineTo(17.5f, 12f); moveTo(9.5f, 17f); lineTo(14.5f, 17f)
